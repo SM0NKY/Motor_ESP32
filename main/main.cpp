@@ -21,11 +21,12 @@ extern "C" void app_main(void)
 
     while (1) {
         myBlinker.blink(1000);
-        motors.motor_1_toggle();
         vTaskDelay(1000 / portTICK_PERIOD_MS);
-        motors.motor_1_toggle();
-        motors.motor1_direction_toggle();
+        motors.motor1_set_speed(2.5);
         vTaskDelay(50/portTICK_PERIOD_MS);
+        motors.motor1_set_speed(5.0);
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        motors.motor1_set_speed(0);
         
     }
 }
