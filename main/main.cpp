@@ -8,8 +8,8 @@
 //Pines de los motores
 #define PWM1 GPIO_NUM_23
 #define PWM2 GPIO_NUM_22
-#define DIR1 GPIO_NUM_1
-#define DIR2 GPIO_NUM_3
+#define DIR1 GPIO_NUM_18
+#define DIR2 GPIO_NUM_19
 
 // Esta línea es CRÍTICA
 extern "C" void app_main(void) 
@@ -21,12 +21,22 @@ extern "C" void app_main(void)
 
     while (1) {
         myBlinker.blink(1000);
+        vTaskDelay(2000 / portTICK_PERIOD_MS);
+        motors.motor1_set_speed(1);
+        vTaskDelay(2000/portTICK_PERIOD_MS);
+        motors.motor1_set_speed(1.5);
+        vTaskDelay(2000 / portTICK_PERIOD_MS);
+        motors.motor1_set_speed(2.5);
+        vTaskDelay(2000 / portTICK_PERIOD_MS);
+        motors.motor1_set_speed(2.7);
         vTaskDelay(1000 / portTICK_PERIOD_MS);
         motors.motor1_set_speed(2.5);
-        vTaskDelay(50/portTICK_PERIOD_MS);
-        motors.motor1_set_speed(5.0);
         vTaskDelay(1000 / portTICK_PERIOD_MS);
+        motors.motor1_set_speed(2);
+        vTaskDelay(500 / portTICK_PERIOD_MS);
+        motors.motor1_set_speed(1);
+        vTaskDelay(500 / portTICK_PERIOD_MS);
         motors.motor1_set_speed(0);
-        
+        vTaskDelay(2000 / portTICK_PERIOD_MS);
     }
 }
