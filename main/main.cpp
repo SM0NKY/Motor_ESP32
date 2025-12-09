@@ -21,22 +21,15 @@ extern "C" void app_main(void)
 
     while (1) {
         myBlinker.blink(1000);
-        vTaskDelay(2000 / portTICK_PERIOD_MS);
-        motors.motor1_set_speed(1);
-        vTaskDelay(2000/portTICK_PERIOD_MS);
-        motors.motor1_set_speed(1.5);
-        vTaskDelay(2000 / portTICK_PERIOD_MS);
-        motors.motor1_set_speed(2.5);
-        vTaskDelay(2000 / portTICK_PERIOD_MS);
-        motors.motor1_set_speed(2.7);
         vTaskDelay(1000 / portTICK_PERIOD_MS);
-        motors.motor1_set_speed(2.5);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-        motors.motor1_set_speed(2);
-        vTaskDelay(500 / portTICK_PERIOD_MS);
-        motors.motor1_set_speed(1);
-        vTaskDelay(500 / portTICK_PERIOD_MS);
-        motors.motor1_set_speed(0);
+        motors.motor1_linear_increase(3.0, 5000); // Aumentar la velocidad del motor 1 a 2.5 m/s en 5 segundos
         vTaskDelay(2000 / portTICK_PERIOD_MS);
+        motors.motor1_linear_increase(0.0, 5000);
+        vTaskDelay(2000 / portTICK_PERIOD_MS);
+        motors.motor1_linear_increase(2.0, 5000);
+        vTaskDelay(2000 / portTICK_PERIOD_MS);
+        motors.motor1_linear_increase(0.0, 5000);
+        vTaskDelay(2000 / portTICK_PERIOD_MS);
+
     }
 }
