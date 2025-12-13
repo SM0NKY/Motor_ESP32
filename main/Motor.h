@@ -17,6 +17,7 @@ class Driver1 {
         float motor_speed_to_dutyCycle(float speed); //Convierte la velocidad en un duty cycle para el PWM donde la velocidad es en m/s
         
         void motor1_linear_increase(float ts_speed, int time_ms);
+        void motor2_linear_increase(float ts_speed, int time_ms);
 
 
         //Cambiar el giro de los motores

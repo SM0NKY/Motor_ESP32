@@ -30,6 +30,13 @@ extern "C" void app_main(void)
         vTaskDelay(2000 / portTICK_PERIOD_MS);
         motors.motor1_linear_increase(0.0, 5000);
         vTaskDelay(2000 / portTICK_PERIOD_MS);
+        
+        //Aqui se agrega el motor2 
+        motors.motor2_linear_increase(1,1, 5000);
+        vTaskDelay(2000 / portTICK_PERIOD_MS);
+        motors.motor2_linear_increase(1.2, 5000);
+        vTaskDelay(2000 / portTICK_PERIOD_MS);
+
 
     }
 }

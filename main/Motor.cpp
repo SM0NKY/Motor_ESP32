@@ -154,3 +154,26 @@ void Driver1::motor1_linear_increase(float ts_speed, int time_ms){
     motor1_set_speed(ts_speed);
 
 }
+
+void Driver1::motor2_linear_increase(float ts_speed, int time_ms){
+   int delay_interval = 20;
+   
+   int total_steps = time_ms / delay_interval;
+   if (total_steps < 1) total_steps = 1;
+    printf(">> RAMPA INICIADA: %.2f m/s -> %.2f m/s (Tiempo: %d ms)\n", 
+             motor2_speed, ts_speed, time_ms);
+    
+    float current_speed = motor2_speed;
+    float speed_increment = (ts_speed - current_speed) / total_steps;
+
+    for (int i = 0; i < total_steps; i++){
+        motor2_speed += speed_increment;
+        
+        float dutyCycle = motor_speed_to_dutyCycle(motor2_speed);
+        ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_1, (int)dutyCycle);
+        ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_1);
+        vTaskDelay(pdMS_TO_TICKS(delay_interval));
+    }
+    printf("<< RAMPA COMPLETADA. Velocidad actual: %.2f m/s\n", motor2_speed);
+    motor2_set_speed(ts_speed);
+}
