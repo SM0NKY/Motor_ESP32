@@ -2,6 +2,7 @@
 #include "freertos/task.h"
 #include "Blinker.h"
 #include "Motor.h"
+#include "GPS.h"
 
 #define BLINKER_PIN GPIO_NUM_2
 
@@ -11,12 +12,18 @@
 #define DIR1 GPIO_NUM_18
 #define DIR2 GPIO_NUM_19
 
+//Pines del GPS
+#define GPS_TX_PIN GPIO_NUM_17
+#define GPS_RX_PIN GPIO_NUM_16
+
 // Esta línea es CRÍTICA
 extern "C" void app_main(void) 
 {
     Blinker myBlinker(BLINKER_PIN);
     Driver1 motors(PWM1, PWM2, DIR1, DIR2);
 
+    GPS gps(GPS_TX_PIN, GPS_RX_PIN);
+    gps.init();
     //Setear el motor a on al inicio 
 
     while (1) {
