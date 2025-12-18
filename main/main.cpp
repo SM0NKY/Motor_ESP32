@@ -16,14 +16,13 @@
 #define GPS_TX_PIN GPIO_NUM_17
 #define GPS_RX_PIN GPIO_NUM_16
 
-// Esta línea es CRÍTICA
-extern "C" void app_main(void) 
-{
+extern "C" void app_main(void) {
     Blinker myBlinker(BLINKER_PIN);
     Driver1 motors(PWM1, PWM2, DIR1, DIR2);
 
     GPS gps(GPS_TX_PIN, GPS_RX_PIN);
-    gps.init();
+    gps.init(9600);
+    //xTaskCreatePinnedToCore(gps_task, "gps_task", 8192, &gps, 3, nullptr, 1);
     //Setear el motor a on al inicio 
 
     while (1) {
@@ -39,11 +38,10 @@ extern "C" void app_main(void)
         vTaskDelay(2000 / portTICK_PERIOD_MS);
         
         //Aqui se agrega el motor2 
-        motors.motor2_linear_increase(1,1, 5000);
+        motors.motor2_linear_increase(1.0, 5000);
         vTaskDelay(2000 / portTICK_PERIOD_MS);
         motors.motor2_linear_increase(1.2, 5000);
         vTaskDelay(2000 / portTICK_PERIOD_MS);
-
-
+        gps.process_data();
     }
 }
