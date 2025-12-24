@@ -1,9 +1,11 @@
-cff-version: "1.2.0"
-message: "Si usas este software, por favor cita este repositorio."
+
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
 title: "ESP32 Motor & GPS implementation"
 authors:
-	- name: "SM0NKY"
-version: "0.0.3"
+	- family-names: "SM0NKY"
+		given-names: ""
+version: 0.0.3
 date-released: "2025-12-23"
 url: "https://github.com/SM0NKY/Motor_ESP32"
 license: "MIT"
