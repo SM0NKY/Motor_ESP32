@@ -21,12 +21,38 @@
 #define GPS_RX_PIN GPIO_NUM_16
 #define GPS_UART_PORT UART_NUM_2
 
+//Definir el constructor de la clase del GPS como variable global
+GPS gps(GPS_TX_PIN, GPS_RX_PIN, GPS_UART_PORT);
+
 //Tarea del segundo hilo
-void gps_task(void *pvParameters){
+void gps_aktivität(void *pvParameters){
     GPS* gps = (GPS*)pvParameters;
+
+    static double last_lat = 0.0;
+    static double last_lon = 0.0;
+
+    TickType_t last_wake_time = 0;
+
     while (1){
         gps->process_data();
+    
+        if ((xTaskGetTickCount() - last_wake_time) > pdMS_TO_TICKS(1000)){
+            
+            Data_GPS current_ps = gps->get_Data();
+
+        if (current_ps.isValid == true && (current_ps.latitude != last_lat || current_ps.longitude != last_lon)){
+            printf("Lat: %.6f | Lon: %.6f | Speed: %.2f | RAW_STATUS: ???\n",  
+            current_ps.latitude, 
+            current_ps.longitude,
+            current_ps.speed_kmh);
+
+            last_lat = current_ps.latitude;
+            last_lon = current_ps.longitude;
+        }
+            last_wake_time = xTaskGetTickCount();
+        }
         vTaskDelay(pdMS_TO_TICKS(10));
+        
     }
 }
 
@@ -34,31 +60,21 @@ extern "C" void app_main(void) {
     Blinker myBlinker(BLINKER_PIN);
     Driver1 motors(PWM1, PWM2, DIR1, DIR2);
 
-    GPS gps(GPS_TX_PIN, GPS_RX_PIN, GPS_UART_PORT);
     gps.init();
-    xTaskCreatePinnedToCore(gps_task, "gps_task", 4096, &gps, 5, NULL, 1);
+    xTaskCreatePinnedToCore(gps_aktivität, "gps_aktivität", 4096, &gps, 5, NULL, 1);
     printf("Inicializacion completa.\n");
     //Setear el motor a on al inicio 
 
     while (1) {
+
         myBlinker.blink(1000);
         vTaskDelay(pdMS_TO_TICKS(1000));
         
-        Data_GPS current_ps = gps.get_Data();
-        if (current_ps.isValid){
-            printf("GPS Data - Latitude: %.6f, Longitude: %.6f, Speed: %.2f km/h\n",
-                   current_ps.latitude,
-                   current_ps.longitude,
-                   current_ps.speed_kmh);
-        } else {
-            printf("GPS Data - No valid fix.\n");
-        }
         
+        myBlinker.blink(1000);
+        vTaskDelay(pdMS_TO_TICKS(1000));
+
         motors.motor1_linear_increase(3.0, 5000); // Aumentar la velocidad del motor 1 a 2.5 m/s en 5 segundos
-        vTaskDelay(pdMS_TO_TICKS(2000));
-        motors.motor1_linear_increase(0.0, 5000);
-        vTaskDelay(pdMS_TO_TICKS(2000));
-        motors.motor1_linear_increase(2.0, 5000);
         vTaskDelay(pdMS_TO_TICKS(2000));
         motors.motor1_linear_increase(0.0, 5000);
         vTaskDelay(pdMS_TO_TICKS(2000));
@@ -68,6 +84,5 @@ extern "C" void app_main(void) {
         vTaskDelay(pdMS_TO_TICKS(2000));
         motors.motor2_linear_increase(1.2, 5000);
         vTaskDelay(pdMS_TO_TICKS(2000));
-        gps.process_data();
     }
 }

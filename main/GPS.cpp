@@ -168,7 +168,7 @@ void GPS::process_data(){
             if (this->sentence_len > 0){
                 this->sentence_buf[this->sentence_len] = '\0';
 
-                printf("RAW NMEA: %s\n", this->sentence_buf); //Borrar luego esta linea
+                //printf("RAW NMEA: %s\n", this->sentence_buf); //Borrar luego esta linea
 
                 parse_nmea(this->sentence_buf);
                 this->sentence_len = 0;
