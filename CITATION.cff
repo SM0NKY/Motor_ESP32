@@ -1,0 +1,24 @@
+cff-version: "1.2.0"
+message: "Si usas este software, por favor cita este repositorio."
+title: "ESP32 Motor & GPS implementation"
+authors:
+	- name: "SM0NKY"
+version: "0.0.3"
+date-released: "2025-12-23"
+url: "https://github.com/SM0NKY/Motor_ESP32"
+license: "MIT"
+keywords:
+	- ESP32
+	- Neo-6M
+	- GPS
+	- MDD10A
+	- motor driver
+	- embedded
+	- C++
+	- firmware
+	- robotics
+abstract: |
+	Implementación de un GPS Neo-6M y un driver MDD10A para controlar motores
+	usando una placa ESP32. Contiene código en C++ para lectura GPS y control
+	de motores.
+
