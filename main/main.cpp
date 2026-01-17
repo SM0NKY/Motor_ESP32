@@ -4,8 +4,6 @@
 #include "driver/gpio.h"
 #include "driver/uart.h"
 
-#include "Blinker.h"
-#include "Motor.h"
 #include "GPS.h"
 
 #define BLINKER_PIN GPIO_NUM_2
