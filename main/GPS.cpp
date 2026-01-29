@@ -41,10 +41,6 @@ void GPS::init(){
 
     uart_flush_input(uart_num);
 
-    printf("--- GPS initialized (NEO-6M) UART%d @ 9600 bps TX=%d RX=%d\n",
-       (int)uart_num,
-       (int)this->tx_pin,
-       (int)this->rx_pin);
 }
 
 double GPS::convert_nmea_to_decimal(float nmea_coord, char quadrant){
