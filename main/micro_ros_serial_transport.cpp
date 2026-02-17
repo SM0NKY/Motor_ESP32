@@ -1,9 +1,10 @@
-// microros_serial_transport.cpp
+// micro_ros_serial_transport.cpp
 #include "micro_ros_serial_transport.hpp"
 
 #include <cstdint>
 
 #include "driver/uart.h"
+#include "esp_err.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
@@ -12,50 +13,73 @@
 // UART0 para micro-ROS (USB-UART típico)
 static constexpr uart_port_t UROS_UART = UART_NUM_0;
 static constexpr int UROS_BAUDRATE = 115200;
-static constexpr int UROS_RX_BUF_SIZE = 2048;
+static constexpr int UROS_BUF_SIZE = 2048;
 
 static bool esp32_serial_open(struct uxrCustomTransport * transport)
 {
   (void)transport;
 
-  const uart_config_t cfg = {
-    .baud_rate = UROS_BAUDRATE,
-    .data_bits = UART_DATA_8_BITS,
-    .parity    = UART_PARITY_DISABLE,
-    .stop_bits = UART_STOP_BITS_1,
-    .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
-    .source_clk = UART_SCLK_DEFAULT
-  };
+  // Config completa (evita warnings y es más estable entre versiones IDF)
+  uart_config_t cfg = {};
+  cfg.baud_rate = UROS_BAUDRATE;
+  cfg.data_bits = UART_DATA_8_BITS;
+  cfg.parity    = UART_PARITY_DISABLE;
+  cfg.stop_bits = UART_STOP_BITS_1;
+  cfg.flow_ctrl = UART_HW_FLOWCTRL_DISABLE;
+  cfg.source_clk = UART_SCLK_DEFAULT;
+  cfg.rx_flow_ctrl_thresh = 0;
 
-  // Por si ya estaba instalado (no pasa nada si no existía)
-  uart_driver_delete(UROS_UART);
+  // Ahora que la consola está en UART1, UART0 debe estar libre:
+  // Forzamos estado limpio para evitar "driver ya instalado" con config vieja.
+  (void)uart_driver_delete(UROS_UART);
 
-  // Config primero
-  uart_param_config(UROS_UART, &cfg);
+  if (uart_param_config(UROS_UART, &cfg) != ESP_OK) {
+    return false;
+  }
 
   // UART0 usa pines por defecto (TX=GPIO1, RX=GPIO3).
-  // Lo dejamos explícito (NO_CHANGE) para evitar rarezas según placa/IDF.
-  uart_set_pin(
+  // No tocamos pines para no pelear con el USB-UART bridge.
+  // Si quieres forzar explícito, puedes usar uart_set_pin con GPIO1/3.
+  // (void)uart_set_pin(UROS_UART, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE,
+  //                    UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+
+  // Instalar driver con RX y TX buffer (TX buffer ayuda a estabilidad)
+  esp_err_t install_rc = uart_driver_install(
     UROS_UART,
-    UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE,
-    UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE
+    UROS_BUF_SIZE,   // rx buffer
+    UROS_BUF_SIZE,   // tx buffer
+    0,
+    nullptr,
+    0
   );
 
-  // Instalar driver al final
-  uart_driver_install(UROS_UART, UROS_RX_BUF_SIZE, 0, 0, nullptr, 0);
+  if (install_rc != ESP_OK) {
+    return false;
+  }
 
+  uart_flush_input(UROS_UART);
+  vTaskDelay(pdMS_TO_TICKS(50));
   return true;
 }
 
 static bool esp32_serial_close(struct uxrCustomTransport * transport)
 {
   (void)transport;
-  uart_driver_delete(UROS_UART);
+
+  uart_flush(UROS_UART);
+
+  // Puedes dejar el driver instalado.
+  // Si quisieras liberarlo:
+  // (void)uart_driver_delete(UROS_UART);
+
   return true;
 }
 
-static size_t esp32_serial_write(struct uxrCustomTransport* transport,
-                                 const uint8_t* buf, size_t len, uint8_t* err)
+static size_t esp32_serial_write(
+  struct uxrCustomTransport* transport,
+  const uint8_t* buf,
+  size_t len,
+  uint8_t* err)
 {
   (void)transport;
 
@@ -74,8 +98,12 @@ static size_t esp32_serial_write(struct uxrCustomTransport* transport,
   return static_cast<size_t>(written);
 }
 
-static size_t esp32_serial_read(struct uxrCustomTransport* transport,
-                                uint8_t* buf, size_t len, int timeout, uint8_t* err)
+static size_t esp32_serial_read(
+  struct uxrCustomTransport* transport,
+  uint8_t* buf,
+  size_t len,
+  int timeout,
+  uint8_t* err)
 {
   (void)transport;
 

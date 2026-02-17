@@ -6,8 +6,12 @@
 
 #include "GPS.h"
 
-// micro-ROS
-#include "micro_ros_serial_transport.hpp"
+// --- micro-ROS ---
+// NOTA: Ya no incluimos headers de transporte manual.
+// El componente oficial lo maneja internamente gracias al menuconfig.
+#include <rmw_microros/rmw_microros.h>
+#include <rmw_microros/ping.h>
+
 #include <rcl/rcl.h>
 #include <rclc/rclc.h>
 #include <rclc/executor.h>
@@ -18,7 +22,7 @@
 #define GPS_RX_PIN GPIO_NUM_16
 #define GPS_UART_PORT UART_NUM_2
 
-// --- micro-ROS objects (static for callbacks) ---
+// --- micro-ROS objects ---
 static rcl_publisher_t gps_pub;
 static std_msgs__msg__String msg;
 static char msg_buffer[128];
@@ -30,11 +34,13 @@ static void timer_callback(rcl_timer_t * timer, int64_t /*last_call_time*/)
 {
     if (timer == NULL || g_gps == nullptr) return;
 
-    // Update GPS parser (consume UART buffer)
     g_gps->process_data();
     Data_GPS current = g_gps->get_Data();
 
     int n = 0;
+    // Limpiamos buffer por seguridad
+    memset(msg_buffer, 0, sizeof(msg_buffer));
+
     if (current.isValid) {
         n = snprintf(
             msg_buffer, sizeof(msg_buffer),
@@ -44,39 +50,56 @@ static void timer_callback(rcl_timer_t * timer, int64_t /*last_call_time*/)
             current.speed_kmh
         );
     } else {
-        n = snprintf(
-            msg_buffer, sizeof(msg_buffer),
-            "GPS INVALID (no fix yet)"
-        );
+        n = snprintf(msg_buffer, sizeof(msg_buffer), "GPS INVALID (no fix yet)");
     }
 
     if (n < 0) return;
-    if ((size_t)n >= sizeof(msg_buffer)) {
-        // truncated, but still publish what fits
-        n = sizeof(msg_buffer) - 1;
-        msg_buffer[n] = '\0';
-    }
 
+    // Aseguramos que el string esté terminado y asignamos tamaño
+    if ((size_t)n >= sizeof(msg_buffer)) {
+        n = (int)sizeof(msg_buffer) - 1;
+    }
+    msg_buffer[n] = '\0';
+
+    msg.data.data = msg_buffer;
     msg.data.size = (size_t)n;
-    rcl_ret_t pub_rc = rcl_publish(&gps_pub, &msg, NULL);
-    (void)pub_rc;
+    msg.data.capacity = sizeof(msg_buffer);
+
+    rcl_ret_t prc = rcl_publish(&gps_pub, &msg, NULL);
+    (void)prc;
 }
 
 extern "C" void app_main(void)
 {
+    // IMPORTANTE: No usar printf() aquí porque la consola (UART0) 
+    // está deshabilitada para usarla con micro-ROS.
+
+    // Dale tiempo al sistema para estabilizarse
+    vTaskDelay(pdMS_TO_TICKS(2000));
+
+    // --- micro-ROS transport init ---
+    // ELIMINADO: microros_serial_transport_init();
+    // La librería inicia el UART automáticamente al llamar a rclc_support_init
+    // usando la configuración que pusiste en el menuconfig.
+
+    // Ping al agente (Bloqueante hasta que conecte)
+    while (rmw_uros_ping_agent(100, 1) != RMW_RET_OK) {
+        vTaskDelay(pdMS_TO_TICKS(200));
+    }
+
     // --- GPS init ---
     static GPS gps_UART(GPS_TX_PIN, GPS_RX_PIN, GPS_UART_PORT);
     gps_UART.init();
     g_gps = &gps_UART;
 
-    // --- micro-ROS transport init (UART0/USB) ---
-    microros_serial_transport_init();
-
     // --- rclc init ---
     rcl_allocator_t allocator = rcl_get_default_allocator();
     rclc_support_t support;
+    
+    // Inicialización estándar
     rcl_ret_t rc = rclc_support_init(&support, 0, NULL, &allocator);
     if (rc != RCL_RET_OK) {
+        // Si falla, bucle infinito (sin printf porque no hay consola)
         while (1) vTaskDelay(pdMS_TO_TICKS(1000));
     }
 
@@ -92,14 +115,16 @@ extern "C" void app_main(void)
         &gps_pub,
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, String),
-        "gps/pose"   // (sin slash inicial suele ser más “ROS-style”)
+        "/gps/pose"
     );
     if (rc != RCL_RET_OK) {
         while (1) vTaskDelay(pdMS_TO_TICKS(1000));
     }
 
-    // --- message memory ---
+    // --- message memory init ---
+    // Inicializamos la estructura del mensaje String
     std_msgs__msg__String__init(&msg);
+    // Asignamos el puntero a nuestro buffer estático
     msg.data.data = msg_buffer;
     msg.data.capacity = sizeof(msg_buffer);
     msg.data.size = 0;
@@ -113,7 +138,7 @@ extern "C" void app_main(void)
         while (1) vTaskDelay(pdMS_TO_TICKS(1000));
     }
 
-    // --- executor (1 handle: timer) ---
+    // --- executor ---
     rclc_executor_t executor;
     rc = rclc_executor_init(&executor, &support.context, 1, &allocator);
     if (rc != RCL_RET_OK) {
@@ -125,7 +150,7 @@ extern "C" void app_main(void)
         while (1) vTaskDelay(pdMS_TO_TICKS(1000));
     }
 
-    // --- main loop: spin executor ---
+    // --- main loop ---
     while (1) {
         rclc_executor_spin_some(&executor, RCL_MS_TO_NS(50));
         vTaskDelay(pdMS_TO_TICKS(10));

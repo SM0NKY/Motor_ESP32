@@ -1,4 +1,4 @@
-// microros_serial_transport.hpp
+// micro_ros_serial_transport.hpp
 #pragma once
 
 #ifdef __cplusplus
