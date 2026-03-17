@@ -7,7 +7,7 @@
 
 class Driver1 {
     public:
-        Driver1(gpio_num_t PWM1, gpio_num_t PWM2, gpio_num_t DIR1, gpio_num_t DIR2);//Constructor with pin arguments
+        Driver1(gpio_num_t PWM1, gpio_num_t PWM2, gpio_num_t DIR1, gpio_num_t DIR2, float maxSpeed);//Constructor with pin arguments
         
         //Establece una funcion para encender los motores y establecer una velocidad
         //En este caso para detener el motor se puede poner una velocidad de 0 
@@ -32,7 +32,7 @@ class Driver1 {
         bool DIR1_STATE, DIR2_STATE;
 
         //Variable para saber la velocidad de rotacion de los motores
-        float motor1_speed, motor2_speed;
+        float motor1_speed, motor2_speed, max_speed;
 
         //Variables para el canal 
         ledc_channel_t ledcChannel1, ledcChannel2;

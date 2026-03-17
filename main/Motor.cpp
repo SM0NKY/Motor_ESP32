@@ -10,11 +10,13 @@
 #define TIMER LEDC_TIMER_0  //Indicar cual timer se va a utilizar [0,1,2,3]
 
 //Se utiliza el constructor para inicializar los pines y las variables
-Driver1::Driver1(gpio_num_t nmt1, gpio_num_t nmt2, gpio_num_t dir1, gpio_num_t dir2){
+Driver1::Driver1(gpio_num_t nmt1, gpio_num_t nmt2, gpio_num_t dir1, gpio_num_t dir2, float maxSpeed){
     PWM1 = nmt1;
     PWM2 = nmt2;
     DIR1 = dir1;
     DIR2 = dir2;
+    max_speed = (maxSpeed > 0) ? maxSpeed : 5.0f; //Si no se especifica una velocidad maxima, se establece en 5 m/s
+
 
     motor1_speed = 0.0, motor2_speed = 0, DIR1_STATE = false, DIR2_STATE  = false;
     //Resetear pines al inicializar la clase
@@ -65,28 +67,13 @@ Driver1::Driver1(gpio_num_t nmt1, gpio_num_t nmt2, gpio_num_t dir1, gpio_num_t d
     ledc_channel_config(&channel2_config);
 }
 
-
-
-// void Driver1::motor_1_toggle(void){
-//     if (SPEED_CONTROL == false){    
-//         PWM1_STATE = !PWM1_STATE;
-//         gpio_set_level(PWM1, PWM1_STATE);
-//         printf("Motor on pin %d toggled to state %d\n", PWM1, PWM1_STATE);
-//     }
-// }
-
-// void Driver1::motor_2_toggle(void){
-//     PWM2_STATE = !PWM2_STATE;
-//     gpio_set_level(PWM2, PWM2_STATE);
-//     printf("Motor on pin %d toggled to state %d\n", PWM2, PWM2_STATE);
-// }
 float Driver1::motor_speed_to_dutyCycle(float speed){
 
     if (speed < 0) speed = 0;
-    if (speed > 5.0) speed = 5.0; //Limitar la velocidad maxima a 5 m/s
+    if (speed > max_speed) speed = max_speed; //Limitar la velocidad maxima a max_speed
 
-    //Suponiendo que la velocidad maxima (5 m/s) corresponde al duty cycle maximo (255)
-    float dutyCycle = (speed / 5.0) * 255.0;
+    //Suponiendo que la velocidad maxima (max_speed) corresponde al duty cycle maximo (255)
+    float dutyCycle = (speed / max_speed) * 255.0;
 
     return (uint8_t)dutyCycle;
 }
