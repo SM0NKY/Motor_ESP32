@@ -21,14 +21,14 @@ void InputLoRa::InitI2C(){
     i2c_driver_install(this->master, I2C_MODE_MASTER, 0, 0, 0);
 }
 
-void InputLoRa::read_data(){
-    LoRADATA_t buffer;
+esp_err_t InputLoRa::read_data(){
+    LoRAData_t buffer;
 
     esp_err_t ret = i2c_master_read_from_device(
         this->master, 
         0x08, // Dirección del dispositivo LoRa (ejemplo)
         (uint8_t*)&buffer, 
-        sizeof(LoRADATA_t), 
+        sizeof(LoRAData_t), 
         pdMS_TO_TICKS(50)
     );
 

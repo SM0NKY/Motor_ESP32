@@ -28,27 +28,23 @@
 #define I2C_MASTER_NUM I2C_NUM_0
 #define I2C_MASTER_FREQ_HZ 400000
 
+
 extern "C" void app_main(void) 
 {
     //Setear los parametros del I2C para el LoRa
     InputLoRa myLoRa(I2C_MASTER_SCL_IO, I2C_MASTER_SDA_IO, I2C_MASTER_NUM, I2C_MASTER_FREQ_HZ);
-    Driver1 motors(FRONT_R_PWM, FRONT_L_PWM, DIR_R, DIR_L, 5.0); // Establecer velocidad máxima a 5 m/s
-
     
+    float max_motor_speed = 5.0f; // Velocidad máxima del motor en m/s
+    Driver1 motors(FRONT_R_PWM, FRONT_L_PWM, DIR_R, DIR_L, max_motor_speed); // Establecer velocidad máxima a 5 m/s
+    Joystick_Converter Joystick_Converter(max_motor_speed);
 
     //Setear el motor a on al inicio 
 
     while (1) {
-        myBlinker.blink(1000);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-        motors.motor1_linear_increase(3.0, 5000); // Aumentar la velocidad del motor 1 a 2.5 m/s en 5 segundos
-        vTaskDelay(2000 / portTICK_PERIOD_MS);
-        motors.motor1_linear_increase(0.0, 5000);
-        vTaskDelay(2000 / portTICK_PERIOD_MS);
-        motors.motor1_linear_increase(2.0, 5000);
-        vTaskDelay(2000 / portTICK_PERIOD_MS);
-        motors.motor1_linear_increase(0.0, 5000);
-        vTaskDelay(2000 / portTICK_PERIOD_MS);
+        myLoRa.read_data(); // Leer datos del LoRa
+        Joystick_Converter.speed_ms_conversion(myLoRa.x, myLoRa.y, myLoRa.brakes, [&motors]() { motors.motor1_direction_toggle(); }); // Convertir la posición del joystick a velocidad para el motor
+        motors.motor1_set_speed(Joystick_Converter.speed_msy); // Establecer la velocidad del motor 1
+        vTaskDelay(50 / portTICK_PERIOD_MS);
 
     }
 }
