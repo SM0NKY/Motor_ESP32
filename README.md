@@ -1,8 +1,8 @@
 # Motor_ESP32 - Control y flasheo
 
-Proyecto para controlar 2 motores DC con ESP32 usando el driver MDD10A.
+Proyecto para controlar 2 motores DC con ESP32 usando PWM. Se utiliza espress-idf para la build y esptool para el flasheo.
 
-En esta version, el ESP32 funciona como receptor `I2C slave`. Eso significa que otro dispositivo `I2C master` le envia los datos de control a la direccion `0x09`, y este ESP32 los usa para calcular la velocidad del motor.
+En esta version, el ESP32 funciona como receptor `I2C slave`. Eso significa que otro dispositivo `I2C master` le envia los datos de control a la direccion `0x08`, y este ESP32 los usa para calcular la velocidad del motor.
 
 ## Funcion principal
 
@@ -24,7 +24,7 @@ En este proyecto, el ESP32 esta configurado como `slave` I2C:
 
 - No inicia la comunicacion.
 - Espera a que el `master` le escriba datos.
-- Escucha en la direccion `0x09`.
+- Escucha en la direccion `0x08`.
 - Recibe un paquete de 5 bytes.
 
 Formato esperado del paquete:
@@ -104,7 +104,7 @@ idf.py build
 
 Ejemplo usando `COM5`:
 
-```powershell (Ejemplo)
+```powershell
 py -m esptool --chip esp32 --port COM5 --baud 460800 --before default_reset --after hard_reset write_flash -z 0x1000 build\bootloader\bootloader.bin 0x8000 build\partition_table\partition-table.bin 0x10000 build\Prueba_ESP32.bin
 ```
 
