@@ -92,27 +92,35 @@ void Driver1::motor2_direction_toggle(void){
 }
 
 void Driver1::motor1_set_speed(float speed_ms){
-    uint8_t pwm_value = motor_speed_to_dutyCycle(speed_ms);
+    float applied_speed = speed_ms;
+    if (applied_speed < 0.0f) applied_speed = 0.0f;
+    if (applied_speed > max_speed) applied_speed = max_speed;
+
+    uint8_t pwm_value = motor_speed_to_dutyCycle(applied_speed);
 
     //Establecer el duty cycle para el motor 1
     ledc_set_duty(MOTOR_MODE, LEDC_CHANNEL_0, pwm_value);
     ledc_update_duty(MOTOR_MODE, LEDC_CHANNEL_0);
 
-    motor1_speed = speed_ms;
+    motor1_speed = applied_speed;
 
-    printf("Velocidad del motor 1 establecida a %.2f m/s (Duty Cycle: %d)\n", speed_ms, pwm_value);
+    printf("Velocidad del motor 1 establecida a %.2f m/s (Duty Cycle: %d)\n", applied_speed, pwm_value);
 }
 
 void Driver1::motor2_set_speed(float speed_ms){
-    uint8_t pwm_value = motor_speed_to_dutyCycle(speed_ms);
+    float applied_speed = speed_ms;
+    if (applied_speed < 0.0f) applied_speed = 0.0f;
+    if (applied_speed > max_speed) applied_speed = max_speed;
+
+    uint8_t pwm_value = motor_speed_to_dutyCycle(applied_speed);
 
     //Establecer el duty cycle para el motor 2
     ledc_set_duty(MOTOR_MODE, LEDC_CHANNEL_1, pwm_value);
     ledc_update_duty(MOTOR_MODE, LEDC_CHANNEL_1);
 
-    motor2_speed = speed_ms;
+    motor2_speed = applied_speed;
 
-    printf("Velocidad del motor 2 establecida a %.2f m/s (Duty Cycle: %d)\n", speed_ms, pwm_value);
+    printf("Velocidad del motor 2 establecida a %.2f m/s (Duty Cycle: %d)\n", applied_speed, pwm_value);
 }
 
 void Driver1::motor1_linear_increase(float ts_speed, int time_ms){
